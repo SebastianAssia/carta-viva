@@ -3,7 +3,7 @@
     {
       "nombre": "momento1",
       "targetIndex": 0,
-      "videoId": "11tcnGWY1vYuT1U9ITZc2x3-1S7aWu6SR"
+      "videoSrc": "./momento1.mp4"
     }
   ]
 }

@@ -46,7 +46,7 @@
       config.pares.forEach((par, i) => {
         const video = document.createElement('video');
         video.id = `video${i}`;
-        video.src = `https://drive.google.com/uc?export=download&id=${par.videoId}`;
+        video.src = par.videoSrc;
         video.setAttribute('preload', 'auto');
         video.setAttribute('loop', '');
         video.setAttribute('muted', '');
