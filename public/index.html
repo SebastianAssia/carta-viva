@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carta Viva</title>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"></script>
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; }
+  </style>
+</head>
+<body>
+  <a-scene
+    mindar-image="imageTargetSrc: https://drive.google.com/uc?export=view&id=1LcyoJihs5CMUaExIMySElHoMkHhQOnfW; autoStart: true;"
+    color-space="sRGB"
+    renderer="colorManagement: true, physicallyCorrectLights"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+  >
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <a-entity mindar-image-target="targetIndex: 0">
+      <a-video
+        src="https://drive.google.com/uc?export=view&id=11tcnGWY1vYuT1U9ITZc2x3-1S7aWu6SR"
+        width="1" height="0.552"
+        position="0 0 0"
+        autoplay loop
+      ></a-video>
+    </a-entity>
+
+  </a-scene>
+</body>
+</html>

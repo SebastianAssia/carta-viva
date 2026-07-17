@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carta Viva — Admin</title>
+</head>
+<body>
+  <h1>Carta Viva</h1>
+  <button id="btn-login">Conectar con Google Drive</button>
+  <div id="status"></div>
+  <div id="lista"></div>
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script>
+    const CLIENT_ID = '655424737083-jgr6r4fp93d8j5orlm29odkqq8vq73al.apps.googleusercontent.com';
+    const IMAGENES_ID = '1EXVb1gYND3jjY9OQtIaAPkkXw2S17Cem';
+    const VIDEOS_ID = '1pOhN3gDR8PcxaWzp_9iHHjMbqUaK-lMi';
+    const SCOPES = 'https://www.googleapis.com/auth/drive';
+
+    let tokenClient;
+
+    function initGapi() {
+      gapi.load('client', async () => {
+        await gapi.client.init({
+          discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+        });
+        document.getElementById('status').innerText = 'Listo para conectar';
+      });
+    }
+
+    window.onload = () => {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: async (response) => {
+          if (response.error) {
+            document.getElementById('status').innerText = 'Error: ' + response.error;
+            return;
+          }
+          document.getElementById('status').innerText = '✅ Conectado con Google Drive';
+          await listarPares();
+        },
+      });
+      initGapi();
+    };
+
+    document.getElementById('btn-login').addEventListener('click', () => {
+      tokenClient.requestAccessToken();
+    });
+
+    async function listarCarpeta(folderId) {
+      const res = await gapi.client.drive.files.list({
+        q: `'${folderId}' in parents and trashed=false`,
+        fields: 'files(id, name, mimeType)',
+      });
+      return res.result.files;
+    }
+
+    function nombreBase(nombre) {
+      return nombre.replace(/\.[^/.]+$/, '');
+    }
+
+    async function listarPares() {
+      const [imagenes, videos] = await Promise.all([
+        listarCarpeta(IMAGENES_ID),
+        listarCarpeta(VIDEOS_ID),
+      ]);
+
+      const mapaVideos = {};
+      videos.forEach(v => {
+        mapaVideos[nombreBase(v.name)] = v;
+      });
+
+      const lista = document.getElementById('lista');
+      const pares = imagenes.map(img => {
+        const base = nombreBase(img.name);
+        const video = mapaVideos[base];
+        return `
+          <div style="border:1px solid #ccc; padding:10px; margin:10px 0;">
+            <p>🖼️ <strong>${img.name}</strong> (ID: ${img.id})</p>
+            ${video 
+              ? `<p>🎬 <strong>${video.name}</strong> (ID: ${video.id})</p>` 
+              : `<p>⚠️ Sin video vinculado</p>`}
+          </div>
+        `;
+      });
+
+      lista.innerHTML = `<h2>Pares encontrados (${pares.length})</h2>` + pares.join('');
+    }
+  </script>
+</body>
+</html>
