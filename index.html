@@ -9,53 +9,120 @@
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <style>
     body { margin: 0; overflow: hidden; }
+    #loading {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: black;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: sans-serif;
+      font-size: 1.2rem;
+      z-index: 999;
+    }
   </style>
 </head>
 <body>
-  <a-scene
-    mindar-image="imageTargetSrc: ./targets.mind; autoStart: true;"
-    color-space="sRGB"
-    renderer="colorManagement: true, physicallyCorrectLights"
-    vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false"
-  >
-    <a-assets>
-      <video id="video1" src="./momento1.mp4" preload="auto" loop muted playsinline webkit-playsinline></video>
-    </a-assets>
-
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-    <a-entity mindar-image-target="targetIndex: 0" id="target0">
-      <a-video
-        id="videoPlane"
-        src="#video1"
-        width="1" height="0.552"
-        position="0 0 0.001"
-        rotation="0 0 0"
-      ></a-video>
-    </a-entity>
-
-  </a-scene>
+  <div id="loading">Cargando Carta Viva...</div>
 
   <script>
-    const target = document.getElementById('target0');
-    const video = document.getElementById('video1');
-    const videoPlane = document.getElementById('videoPlane');
+    const CONFIG_ID = '13HTJiR6tBOpNJ1dCMUZWSqi58rHJGxGp';
 
-    video.addEventListener('loadedmetadata', () => {
-      const ratio = video.videoHeight / video.videoWidth;
-      videoPlane.setAttribute('height', ratio);
-    });
+    async function cargarConfig() {
+      const res = await fetch(`https://drive.google.com/uc?export=download&id=${CONFIG_ID}`);
+      const config = await res.json();
+      return config;
+    }
 
-    target.addEventListener('targetFound', () => {
-      video.muted = false;
-      video.play();
-    });
+    function construirEscena(config) {
+      const scene = document.createElement('a-scene');
+      scene.setAttribute('mindar-image', 'imageTargetSrc: ./targets.mind; autoStart: true;');
+      scene.setAttribute('color-space', 'sRGB');
+      scene.setAttribute('renderer', 'colorManagement: true, physicallyCorrectLights');
+      scene.setAttribute('vr-mode-ui', 'enabled: false');
+      scene.setAttribute('device-orientation-permission-ui', 'enabled: false');
 
-    target.addEventListener('targetLost', () => {
-      video.pause();
-      video.muted = true;
-      video.currentTime = 0;
+      // Assets
+      const assets = document.createElement('a-assets');
+      config.pares.forEach((par, i) => {
+        const video = document.createElement('video');
+        video.id = `video${i}`;
+        video.src = `https://drive.google.com/uc?export=download&id=${par.videoId}`;
+        video.setAttribute('preload', 'auto');
+        video.setAttribute('loop', '');
+        video.setAttribute('muted', '');
+        video.setAttribute('playsinline', '');
+        video.setAttribute('webkit-playsinline', '');
+        assets.appendChild(video);
+      });
+      scene.appendChild(assets);
+
+      // Cámara
+      const camera = document.createElement('a-camera');
+      camera.setAttribute('position', '0 0 0');
+      camera.setAttribute('look-controls', 'enabled: false');
+      scene.appendChild(camera);
+
+      // Targets
+      config.pares.forEach((par, i) => {
+        const entity = document.createElement('a-entity');
+        entity.setAttribute('mindar-image-target', `targetIndex: ${par.targetIndex}`);
+        entity.id = `target${i}`;
+
+        const videoPlane = document.createElement('a-video');
+        videoPlane.id = `videoPlane${i}`;
+        videoPlane.setAttribute('src', `#video${i}`);
+        videoPlane.setAttribute('width', '1');
+        videoPlane.setAttribute('height', '0.552');
+        videoPlane.setAttribute('position', '0 0 0.001');
+
+        entity.appendChild(videoPlane);
+        scene.appendChild(entity);
+
+        // Eventos
+        const video = document.getElementById(`video${i}`);
+        const plane = videoPlane;
+
+        entity.addEventListener('targetFound', () => {
+          if (video) {
+            video.muted = false;
+            video.play();
+          }
+        });
+
+        entity.addEventListener('targetLost', () => {
+          if (video) {
+            video.pause();
+            video.muted = true;
+            video.currentTime = 0;
+          }
+        });
+      });
+
+      document.body.appendChild(scene);
+
+      // Ajuste automático de ratio
+      config.pares.forEach((par, i) => {
+        const video = document.getElementById(`video${i}`);
+        const plane = document.getElementById(`videoPlane${i}`);
+        if (video && plane) {
+          video.addEventListener('loadedmetadata', () => {
+            const ratio = video.videoHeight / video.videoWidth;
+            plane.setAttribute('height', ratio);
+          });
+        }
+      });
+
+      document.getElementById('loading').style.display = 'none';
+    }
+
+    cargarConfig().then(config => {
+      construirEscena(config);
+    }).catch(err => {
+      document.getElementById('loading').innerText = 'Error cargando configuración';
+      console.error(err);
     });
   </script>
 </body>
