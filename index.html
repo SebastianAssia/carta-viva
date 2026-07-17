@@ -40,6 +40,12 @@
   <script>
     const target = document.getElementById('target0');
     const video = document.getElementById('video1');
+    const videoPlane = document.getElementById('videoPlane');
+
+    video.addEventListener('loadedmetadata', () => {
+      const ratio = video.videoHeight / video.videoWidth;
+      videoPlane.setAttribute('height', ratio);
+    });
 
     target.addEventListener('targetFound', () => {
       video.muted = false;
