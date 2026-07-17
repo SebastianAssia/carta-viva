@@ -28,10 +28,8 @@
   <div id="loading">Cargando Carta Viva...</div>
 
   <script>
-    const CONFIG_ID = '13HTJiR6tBOpNJ1dCMUZWSqi58rHJGxGp';
-
     async function cargarConfig() {
-      const res = await fetch(`https://drive.google.com/uc?export=download&id=${CONFIG_ID}`);
+      const res = await fetch('./config.json');
       const config = await res.json();
       return config;
     }
@@ -44,7 +42,6 @@
       scene.setAttribute('vr-mode-ui', 'enabled: false');
       scene.setAttribute('device-orientation-permission-ui', 'enabled: false');
 
-      // Assets
       const assets = document.createElement('a-assets');
       config.pares.forEach((par, i) => {
         const video = document.createElement('video');
@@ -59,13 +56,11 @@
       });
       scene.appendChild(assets);
 
-      // Cámara
       const camera = document.createElement('a-camera');
       camera.setAttribute('position', '0 0 0');
       camera.setAttribute('look-controls', 'enabled: false');
       scene.appendChild(camera);
 
-      // Targets
       config.pares.forEach((par, i) => {
         const entity = document.createElement('a-entity');
         entity.setAttribute('mindar-image-target', `targetIndex: ${par.targetIndex}`);
@@ -80,37 +75,32 @@
 
         entity.appendChild(videoPlane);
         scene.appendChild(entity);
-
-        // Eventos
-        const video = document.getElementById(`video${i}`);
-        const plane = videoPlane;
-
-        entity.addEventListener('targetFound', () => {
-          if (video) {
-            video.muted = false;
-            video.play();
-          }
-        });
-
-        entity.addEventListener('targetLost', () => {
-          if (video) {
-            video.pause();
-            video.muted = true;
-            video.currentTime = 0;
-          }
-        });
       });
 
       document.body.appendChild(scene);
 
-      // Ajuste automático de ratio
       config.pares.forEach((par, i) => {
+        const entity = document.getElementById(`target${i}`);
         const video = document.getElementById(`video${i}`);
         const plane = document.getElementById(`videoPlane${i}`);
+
         if (video && plane) {
           video.addEventListener('loadedmetadata', () => {
             const ratio = video.videoHeight / video.videoWidth;
             plane.setAttribute('height', ratio);
+          });
+        }
+
+        if (entity && video) {
+          entity.addEventListener('targetFound', () => {
+            video.muted = false;
+            video.play();
+          });
+
+          entity.addEventListener('targetLost', () => {
+            video.pause();
+            video.muted = true;
+            video.currentTime = 0;
           });
         }
       });
